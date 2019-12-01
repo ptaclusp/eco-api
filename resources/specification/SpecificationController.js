@@ -9,8 +9,8 @@ module.exports = {
 
             res.json(specifications);
         }
-        catch(err) {
-            res.status(500).json({ message: err.message});
+        catch (err) {
+            res.status(500).json({ message: err.message });
         }
     },
     create: async function (req, res) {
@@ -19,10 +19,21 @@ module.exports = {
 
             res.status(201).json(specification);
         }
-        catch(err) {
+        catch (err) {
             console.dir(err);
-            res.status(500).json({ message: err.message});
+            res.status(500).json({ message: err.message });
         }
+    },
+    get: async function (req, res) {
+        try {
+            const specification = await Specification.get(req.params.id);
+
+            res.json(specification);
+        }
+        catch (err) {
+            res.status(500).json({ message: err.message });
+        }
+
     }
 
 }

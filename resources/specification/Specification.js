@@ -9,7 +9,7 @@ var SpecificationSchema = mongoose.Schema({
     description: {
         type: String,
         required: false
-    },
+    }
 
 });
 // Export Contact model
@@ -23,5 +23,8 @@ module.exports.create = async function(data) {
     
     const specification = new Specification(data);
     return specification.save()
+}
 
+module.exports.get = async function(id) {
+    return Specification.findById(id);
 }

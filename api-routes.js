@@ -2,6 +2,10 @@
 // Initialize express router
 let router = require('express').Router();
 var cors = require('cors')
+var swagger = require('./pc.swagger.json');
+var UniController = require('./uni-controller');
+var schema = require('./schematator');
+const $logger = require('./logger')
 
 router.all('*', cors());
 // Set default API response
@@ -12,20 +16,52 @@ router.get('/', function (req, res) {
     });
 });
 
-var candidates      = require("./resources/candidate/CandidateController");
-var specifications  = require("./resources/specification/SpecificationController");
+// парсим JSON
+
+/*
+var builder = new UniController();
+schema.import(swagger);
+
+Object.keys(swagger.paths).forEach((route) => {
+
+    console.log(`route: ${route}`);
+    // iterate over resource paths
+    Object.keys(swagger.paths[route]).forEach((operation) => {
+
+        router.route(`${route}`)[operation](builder.create(operation, swagger.paths[route][operation]));
+    })
+
+});
+*/
+
+var candidates = require("./resources/candidate/CandidateController");
+var specifications = require("./resources/specification/SpecificationController");
+var characteristics = require('./resources/characteristic/CharacteristicController');
 
 
-router.route('/candidate')
+router.route('/Candidate')
     .get(candidates.index)
     .post(candidates.create)
     ;
 
-router.route('/specification')
+router.route('/Specification')
     .get(specifications.index)
     .post(specifications.create)
     ;
 
+router.route('/Specification/:id')
+    .get(specifications.get)
+    ;
+
+router.route('/Characteristic')
+    .get(characteristics.index)
+    .post(characteristics.create)
+    ;
+
+router.route('/Characteristic/:id')
+    .get(characteristics.get)
+    .patch(characteristics.patch)
+    ;
 
 // Export API routes
 module.exports = router;
