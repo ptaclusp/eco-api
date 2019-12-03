@@ -2,9 +2,10 @@
 // Initialize express router
 let router = require('express').Router();
 var cors = require('cors')
+var engine = require('./js-boot-swagger')
 var swagger = require('./pc.swagger.json');
-var UniController = require('./uni-controller');
-var schema = require('./schematator');
+//var UniController = require('./uni-controller');
+//var schema = require('./schematator');
 const $logger = require('./logger')
 
 router.all('*', cors());
@@ -15,6 +16,9 @@ router.get('/', function (req, res) {
         message: 'EcoSystem API implementation'
     });
 });
+
+engine.logger($logger);
+engine.import(swagger);
 
 // парсим JSON
 
@@ -33,7 +37,7 @@ Object.keys(swagger.paths).forEach((route) => {
 
 });
 */
-
+/*
 var candidates = require("./resources/candidate/CandidateController");
 var specifications = require("./resources/specification/SpecificationController");
 var characteristics = require('./resources/characteristic/CharacteristicController');
@@ -64,4 +68,5 @@ router.route('/Characteristic/:id')
     ;
 
 // Export API routes
+*/
 module.exports = router;
