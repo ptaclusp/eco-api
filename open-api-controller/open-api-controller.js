@@ -15,7 +15,7 @@ function ApiController() {
 
     this.methods = {
         index: index
-    };
+    }
 }
 
 /**
@@ -23,7 +23,7 @@ function ApiController() {
  * @param swagger a Swagger file
  * @param router  an Express router instance
  */
-ApiController.prototype.import = function(swagger, router) {
+ApiController.prototype.import = function (swagger, router) {
     // prepare schema
     schema.import(swagger.definitions);
     // iterate over paths
@@ -33,11 +33,11 @@ ApiController.prototype.import = function(swagger, router) {
         // check if this a parametrized route
         let matches = this.routeParamExpression.exec(pathName);
 
-        if(matches) {
+        if (matches) {
             //console.debug(`${matches[1]} has parameter ${matches[2]}`);
             // iterate over methods
             Object.keys(swagger.paths[pathName]).forEach((method) => {
-                switch(method) {
+                switch (method) {
                     default:
                         console.debug(chalk.red(`operation ${method} for parametrized routes is not implemented`));
                 }
@@ -46,7 +46,7 @@ ApiController.prototype.import = function(swagger, router) {
             matches = this.routeExpression.exec(pathName);
             let name = '';
 
-            if(matches) {
+            if (matches) {
                 name = matches[1];
             } else {
                 // this is a bogus resource name
@@ -58,7 +58,7 @@ ApiController.prototype.import = function(swagger, router) {
                 // determine processing function name
                 let handlerName = mapping[method];
 
-                if(handlerName && this.methods[handlerName]) { // if mapping and handler for this method exists
+                if (handlerName && this.methods[handlerName]) { // if mapping and handler for this method exists
 
                     console.debug(chalk.green(`adding handler for operation ${pathName} - ${handlerName}`));
                     // create handler instance
@@ -70,7 +70,7 @@ ApiController.prototype.import = function(swagger, router) {
                 }
             });
         }
-        
+
     });
 }
 

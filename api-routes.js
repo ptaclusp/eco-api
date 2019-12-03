@@ -3,7 +3,6 @@
 // Initialize express router
 let router = require('express').Router();
 var cors = require('cors')
-var engine = require('./js-boot-swagger')
 var swagger = require('./pc.swagger.json');
 //var UniController = require('./uni-controller');
 //var schema = require('./schematator');
@@ -22,8 +21,6 @@ router.get('/', function (req, res) {
 });
 
 $controller.import(swagger, router);
-engine.logger($logger);
-engine.import(swagger);
 
 // парсим JSON
 
@@ -42,10 +39,6 @@ Object.keys(swagger.paths).forEach((route) => {
 
 });
 */
-<<<<<<< HEAD
-
-=======
->>>>>>> 5ee349ce64bfbc5662414fac0243e6bfb2f4c2cb
 /*
 var candidates = require("./resources/candidate/CandidateController");
 var specifications = require("./resources/specification/SpecificationController");
@@ -77,5 +70,5 @@ router.route('/Characteristic/:id')
     ;
 */
 // Export API routes
-*/
+
 module.exports = router;

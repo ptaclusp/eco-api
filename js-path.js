@@ -2,7 +2,7 @@ function JsPath() {
 
 }
 
-JsPath.prototype.get - function (source, path) {
+JsPath.prototype.get = function (source, path) {
 
     let steps = path.split('.');
     let res = source;
