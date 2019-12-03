@@ -1,6 +1,5 @@
 // contactModel.js
 var mongoose = require('mongoose');
-const { applyPatch } = require('fast-json-patch');
 // Setup schema
 
 var CharacteristicValue  = mongoose.Schema({

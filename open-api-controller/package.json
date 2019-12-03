@@ -1,0 +1,11 @@
+{
+  "name": "open-api-controller",
+  "version": "1.0.0",
+  "description": "Open API interface controller for Express server",
+  "main": "open-api-controller.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
