@@ -8,6 +8,7 @@ const mapping = {
     get: 'index',
     post: 'create'
 }
+
 function ApiController() {
 
     this.routeExpression = new RegExp('\\W+(\\w+)');
@@ -72,6 +73,7 @@ ApiController.prototype.import = function (swagger, router) {
         }
 
     });
+
 }
 
 module.exports = new ApiController();
