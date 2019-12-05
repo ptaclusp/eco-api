@@ -37,12 +37,13 @@ app.options('*', cors());
 // API routes settings
 app.use('/api', routes);
 
-// MongoDB connection setup
-mongoose.connect($config.storage.url, { useNewUrlParser: true, useUnifiedTopology: true });
-let db = mongoose.connection;
+// MongoDB connection
+
+let db = mongoose.connect($config.storage.url, { useNewUrlParser: true, useUnifiedTopology: true });
+let connection = mongoose.connection;
 
 // Added check for DB connection
-if (!db) {
+if (!connection) {
     $logger.error("DB connection failure")
     return;
 }
@@ -55,3 +56,4 @@ else {
 app.listen(port, function () {
     $logger.info(`API server running on port ${port}`);
 });
+
