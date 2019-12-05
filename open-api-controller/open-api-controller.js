@@ -1,4 +1,6 @@
 const index = require('./resource-index');
+const create = require('./resource-create');
+const get = require('./resource-get');
 const chalk = require('chalk');
 const schema = require('./schema-provider');
 
@@ -15,7 +17,9 @@ function ApiController() {
     this.routeParamExpression = new RegExp('\\W+(\\w+)\\W+\{(\\w+)\\}')
 
     this.methods = {
-        index: index
+        index: index,
+        create: create,
+        get: get
     }
 }
 
@@ -38,9 +42,16 @@ ApiController.prototype.import = function (swagger, router) {
             //console.debug(`${matches[1]} has parameter ${matches[2]}`);
             // iterate over methods
             Object.keys(swagger.paths[pathName]).forEach((method) => {
-                switch (method) {
-                    default:
-                        console.debug(chalk.red(`operation ${method} for parametrized routes is not implemented`));
+                if (this.methods[method]) {
+                    let name = matches[1];
+                    let param = matches[2];
+                    let route = `/${name}/:${param}`;
+                    let handler = new this.methods[method](name, swagger.paths[pathName][method]);
+                    // add route to this handler with instance binding
+                    router.route(route)[method](handler.exec.bind(handler));
+                     
+                } else {
+                    console.debug(chalk.red(`operation ${method} for parametrized routes is not implemented`));
                 }
             });
         } else { // this is a non-parametrized resource route
@@ -63,7 +74,7 @@ ApiController.prototype.import = function (swagger, router) {
 
                     console.debug(chalk.green(`adding handler for operation ${pathName} - ${handlerName}`));
                     // create handler instance
-                    let handler = new this.methods[handlerName](name, swagger.paths[pathName][method], swagger.definitions);
+                    let handler = new this.methods[handlerName](name, swagger.paths[pathName][method]);
                     // add route to this handler with instance binding
                     router.route(pathName)[method](handler.exec.bind(handler));
                 } else {

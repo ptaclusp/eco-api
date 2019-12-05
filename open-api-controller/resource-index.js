@@ -15,7 +15,7 @@ function Index(name, path) {
     let typeName = schema.extractTypeName(path.responses["200"].schema.items.$ref);
     console.debug(`type name ${typeName}`);
     console.debug(chalk.cyan(`${schema.collectionName(typeName)}`));
-    this.model = mongoose.model(schema.collectionName(typeName), schema.schemas[typeName]);
+    this.model = schema.orm(schema.collectionName(name), schema.schemas[typeName]);
     console.debug(`data type: ${typeName}`);
 }
 

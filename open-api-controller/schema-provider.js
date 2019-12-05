@@ -15,6 +15,7 @@ var DataTypes = {
 
 SchemaProvider.prototype.import = function (definitions) {
 
+    this.schemas['Any'] = String;   
     console.debug('processing schema');
     this.definitions = definitions;
     // iterate over definitions and import them
@@ -42,7 +43,9 @@ SchemaProvider.prototype.importDefinition = function (name, definition) {
     }
 
     console.debug(chalk.magenta(`${name}`))
-    //console.dir(content);
+    if(name=='ProductSpecificationCharacteristicValue') {
+        console.dir(content);
+    }
     this.schemas[name] = mongoose.Schema(content);
 }
 
@@ -83,6 +86,16 @@ SchemaProvider.prototype.importPlain = function (property) {
 
 SchemaProvider.prototype.extractTypeName = function (ref) {
     return ref.replace('#/definitions/', '');
+}
+
+SchemaProvider.prototype.orm = function(name, schema) {
+    let i = mongoose.modelNames().indexOf(name);
+
+    if(i == -1) { // if model desn't exist
+        return mongoose.model(name, schema);
+    } else {
+        return mongoose.model(name);
+    }
 }
 
 // import reference
