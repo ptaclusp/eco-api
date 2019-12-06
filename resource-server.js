@@ -23,9 +23,11 @@ const app = express();
 // web server plugins
 app.use(parser.urlencoded({ extended: true }));
 app.use(parser.json({ type: ['application/json', 'application/json-patch+json'] }));
+/*
 app.use(epino({
     level: 'info'
 }, pino.destination('./log/access.log')));
+*/
 
 
 app.disable('x-powered-by');
