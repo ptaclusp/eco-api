@@ -1,6 +1,7 @@
 const chalk = require('chalk');
 const mongoose = require('mongoose');
 var schema = require('./schema-provider');
+var href="http://localhost:8080/api/";
 
 /**
  * 
@@ -28,6 +29,8 @@ console.debug(`data type: ${typeName}`);*/
 Create.prototype.exec = async function (req, res) {
     console.debug(chalk.yellow(`creating resource ${this.name}`));
     let item = new this.model(req.body);
+    item = await item.save();
+    item.href=`${href}${this.name}/${item._id}`;
     item = await item.save();
 
     res.status(201).json(item);

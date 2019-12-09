@@ -1,5 +1,6 @@
 const index = require('./resource-index');
 const create = require('./resource-create');
+const patch = require('./resource-patch');
 const get = require('./resource-get');
 const chalk = require('chalk');
 const schema = require('./schema-provider');
@@ -19,7 +20,8 @@ function ApiController() {
     this.methods = {
         index: index,
         create: create,
-        get: get
+        get: get,
+        patch: patch
     }
 }
 

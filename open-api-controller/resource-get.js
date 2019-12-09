@@ -18,7 +18,7 @@ function Get(name, path) {
     // here's an assumption that for POST operations there exist only one parameter and it's in body
     let typeName = schema.extractTypeName(path.responses["200"].schema.$ref);
     this.model = schema.orm(schema.collectionName(name), schema.schemas[typeName]);
-    console.debug(`CREATE type name ${typeName}`);
+    console.debug(`GET type name ${typeName}`);
     /*
 let typeName = schema.extractTypeName(path.responses["200"].schema.items.$ref);
 console.debug(`type name ${typeName}`);
