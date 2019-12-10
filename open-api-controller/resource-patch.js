@@ -86,12 +86,36 @@ Patch.prototype.set = function(item, path, value) {
 
 }
 
+Patch.prototype.add = function(item, path, value) {
+
+    let container = this.iterate(item, path);
+    //console.dir(container);
+    let array = container.owner[container.attribute];
+
+    if(array instanceof Array) {
+        array.push(value);
+    } else {
+        console.log(`type: ${typeof container.owner[container.attribute]}`);
+    }
+    /*
+    if(attribute instanceof Array) {
+        attribute.push(value);
+    }
+    */
+
+}
+
+
 Patch.prototype.iterate = function(item, path) {
 
     let names = path.split('/');
     let current = item;
     let selector = '';
     let attribute = names.pop();
+
+    if(attribute == '-') { // array APPEND marker;
+        attribute = names.pop();
+    }
 
     names.forEach((name) => {
 
