@@ -1,6 +1,6 @@
 const chalk = require('chalk');
 const mongoose = require('mongoose');
-var   schema = require('./schema-provider');
+var schema = require('./schema-provider');
 
 const PATCH_OPERATIONS = {
     ADD: "add",
@@ -28,7 +28,7 @@ function Patch(name, path) {
 }
 
 // index resources
-Patch.prototype.exec = async function(req, res) {
+Patch.prototype.exec = async function (req, res) {
     // let's check content type
     let contentType = req.get('Content-Type');
 
@@ -42,7 +42,7 @@ Patch.prototype.exec = async function(req, res) {
     }
 }
 
-Patch.prototype.jsonpatch = async function(req, res, orm) {
+Patch.prototype.jsonpatch = async function (req, res, orm) {
     console.debug('performing JSON patch operation');
 
     // load an object from DB for patching
@@ -50,7 +50,7 @@ Patch.prototype.jsonpatch = async function(req, res, orm) {
 
     // iterate over operations
     req.body.forEach((operation) => {
-        switch(operation.op.toLowerCase()) {
+        switch (operation.op.toLowerCase()) {
             case PATCH_OPERATIONS.ADD: {
                 // perform ADD operation
                 console.debug(`JSON patch ADD ${operation.path}`)
@@ -63,7 +63,7 @@ Patch.prototype.jsonpatch = async function(req, res, orm) {
                 this.set(item, operation.path, operation.value);
                 break;
             }
-            default: 
+            default:
                 console.error(`patch operation ${operation.op} is not implemented`);
         }
     });
@@ -72,10 +72,11 @@ Patch.prototype.jsonpatch = async function(req, res, orm) {
     return await item.save();
 }
 
-Patch.prototype.set = function(item, path, value) {
+Patch.prototype.set = function (item, path, value) {
 
-    let container = this.iterate(item, path);
-    container.owner[container.attribute] = value;
+    this.iterate(item, path, (current, element, attribute) => {
+        element[attribute] = value;
+    });
     /*
     if(attribute instanceof Array) {
         throw 'SET operation for arrays not supported';
@@ -86,63 +87,74 @@ Patch.prototype.set = function(item, path, value) {
 
 }
 
-Patch.prototype.add = function(item, path, value) {
+Patch.prototype.add = function (item, path, value) {
 
-    let container = this.iterate(item, path);
-    //console.dir(container);
-    let array = container.owner[container.attribute];
+    this.iterate(item, path, (current, element, attribute) => {
 
-    if(array instanceof Array) {
-        array.push(value);
-    } else {
-        console.log(`type: ${typeof container.owner[container.attribute]}`);
-    }
-    /*
-    if(attribute instanceof Array) {
-        attribute.push(value);
-    }
-    */
+        if(!current) {
+            console.debug(`current is empty, creating new array with ${attribute}`);
+            element[attribute] = [];
+            current = element[attribute];
+        } 
 
+        current.push(value);
+    });
 }
 
 
-Patch.prototype.iterate = function(item, path) {
+/**
+ * Extract resource subitem and its selector from path
+ * @argument item a resource object
+ * @argument path a JSON patch op path
+ * @argument process a handler for processing element operation
+ * 
+ */
+Patch.prototype.iterate = function (item, path, process) {
 
+    // split path to array of strings
     let names = path.split('/');
+    // init the current object structure
     let current = item;
-    let selector = '';
-    let attribute = names.pop();
+    let context = null;
+    let attribute = '';
 
-    if(attribute == '-') { // array APPEND marker;
-        attribute = names.pop();
-    }
-
-    names.forEach((name) => {
+    while (names.length) {
+        // get next path element from array
+        let name = names.shift();
+        console.debug(`next name: ${name}`);
 
         // processing only non-empty names
-        if(!name || name.length == 0) {
-            return;
+        if (!name || name.length == 0) {
+            continue;
         }
 
-        // skipping special symbols like dash
-        if(name == '-') {
-            return;
+        if (name == '-') {
+            continue;
         }
 
-        if(selector.length == 0) {
-            selector = name;
-        } else {
-            selector = `${selector}.${name}`;
-        }
-
-        console.debug(`path: ${selector}.${name}`)
-        current = current[name];
+        context = current;
         attribute = name;
-    });
+        current = this.step(current, name);
+    }
 
-    return { owner: current, attribute: attribute };
+    process(current, context, attribute);
 }
 
+Patch.prototype.step = function (element, path) {
+    if(element instanceof Array) {
+        let ret = undefined;
+        element.forEach((item) => {
+            if(item._id == path) {
+                ret = item;
+            }
+        })
+
+        return ret;
+
+    } else {
+        return element[path];
+    }
+}
 
 /**
  * Fetch a single resource item from DB
