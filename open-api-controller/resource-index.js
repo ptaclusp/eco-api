@@ -1,6 +1,7 @@
 const chalk = require('chalk');
 const mongoose = require('mongoose');
 var   schema = require('./schema-provider');
+const href = require('./href-controller');
 
 
 /**
@@ -17,6 +18,7 @@ function Index(name, path) {
 
     // determine data type
     let typeName = schema.extractTypeName(path.responses["200"].schema.items.$ref);
+    this.typeName = typeName;
     console.debug(`type name ${typeName}`);
     console.debug(chalk.cyan(`${schema.collectionName(typeName)}`));
     this.model = schema.orm(schema.collectionName(name), schema.schemas[typeName]);
@@ -53,6 +55,7 @@ Index.prototype.exec = async function(req, res) {
     console.dir(findOptions);
     let items = await this.model.find(findOptions);
 
+    href.linkify(this.typeName, items);
     res.status(200).json(items);
 }
 

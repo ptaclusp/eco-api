@@ -1,6 +1,7 @@
 const chalk = require('chalk');
 const mongoose = require('mongoose');
 var schema = require('./schema-provider');
+const href = require('./href-controller');
 
 /**
  * 
@@ -17,6 +18,7 @@ function Get(name, path) {
     // determine data type from params
     // here's an assumption that for POST operations there exist only one parameter and it's in body
     let typeName = schema.extractTypeName(path.responses["200"].schema.$ref);
+    this.typeName = typeName;
     this.model = schema.orm(schema.collectionName(name), schema.schemas[typeName]);
     console.debug(`GET type name ${typeName}`);
     /*
@@ -31,7 +33,7 @@ console.debug(`data type: ${typeName}`);*/
 Get.prototype.exec = async function (req, res) {
     console.debug(chalk.yellow(`get resource ${this.name}`));
     item = await this.model.findById(req.params.id);
-
+    href.linkify(this.typeName, item);
     res.status(200).json(item);
 }
 
