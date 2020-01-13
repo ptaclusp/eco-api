@@ -1,5 +1,6 @@
 const chalk = require('chalk');
 const mongoose = require('mongoose');
+const util = require('util');
 var schema = require('./schema-provider');
 
 const PATCH_OPERATIONS = {
@@ -16,6 +17,15 @@ const PATCH_OPERATIONS = {
 function Patch(name, path) {
     this.name = name;
     this.path = path;
+
+    this.handler = null;
+
+    try {
+        this.handler = require(`./handlers/${this.name}`);
+        console.log(`found handler for PATCH ${this.name} operations`);
+    } catch (e) {
+        // not a big deal
+    }
 
     console.log(`PATCH ${name}`);
     console.dir(path);
@@ -36,9 +46,10 @@ Patch.prototype.exec = async function (req, res) {
         console.debug(`JSON patch operation`)
         // perform JSON patch
         let item = await this.jsonpatch(req, res);
-        res.status(200).json(item);
+        console.log('patched');
+        return res.status(200).json(item);
     } else { // other mechanisms are not supported
-        res.status(501).json({ message: "plain PATCH is not implemented yet" })
+        return res.status(501).json({ message: "plain PATCH is not implemented yet" })
     }
 }
 
@@ -49,7 +60,8 @@ Patch.prototype.jsonpatch = async function (req, res, orm) {
     let item = await this.fetch(req);
 
     // iterate over operations
-    req.body.forEach((operation) => {
+    /*
+    req.body.forEach(async (operation) => {
         switch (operation.op.toLowerCase()) {
             case PATCH_OPERATIONS.ADD: {
                 // perform ADD operation
@@ -67,15 +79,47 @@ Patch.prototype.jsonpatch = async function (req, res, orm) {
                 console.error(`patch operation ${operation.op} is not implemented`);
         }
     });
+    */
+    for (const operation of req.body) {
+        switch (operation.op.toLowerCase()) {
+            case PATCH_OPERATIONS.ADD: {
+                // perform ADD operation
+                console.debug(`JSON patch ADD ${operation.path}`)
+                await this.add(item, operation.path, operation.value);
+                break;
+            }
+            case PATCH_OPERATIONS.SET: {
+                // perform ADD operation
+                console.debug(`JSON patch SET ${operation.path}`)
+                await this.set(item, operation.path, operation.value);
+                break;
+            }
+            default:
+                console.error(`patch operation ${operation.op} is not implemented`);
+        }
+
+    }
 
     // update the object in DB
     return await item.save();
 }
 
-Patch.prototype.set = function (item, path, value) {
+Patch.prototype.set = async function (item, path, value) {
 
-    this.iterate(item, path, (current, element, attribute) => {
+    await this.iterate(item, path, async (current, element, attribute) => {
+        // watch here for special rules
+        //console.log(`name: ${this.name}, element: ${element}, attribute: ${attribute}`)
+
         element[attribute] = value;
+
+        if (this.handler && this.handler.patch) {
+            console.log('using handler');
+            await this.handler.patch(item, path, value);
+            console.log('handler applied');
+        } else {
+            await Promise.resolve(true);
+        }
+
     });
     /*
     if(attribute instanceof Array) {
@@ -87,15 +131,14 @@ Patch.prototype.set = function (item, path, value) {
 
 }
 
-Patch.prototype.add = function (item, path, value) {
-
+Patch.prototype.add = async function (item, path, value) {
     this.iterate(item, path, (current, element, attribute) => {
 
-        if(!current) {
+        if (!current) {
             console.debug(`current is empty, creating new array with ${attribute}`);
             element[attribute] = [];
             current = element[attribute];
-        } 
+        }
 
         current.push(value);
     });
@@ -109,7 +152,7 @@ Patch.prototype.add = function (item, path, value) {
  * @argument process a handler for processing element operation
  * 
  */
-Patch.prototype.iterate = function (item, path, process) {
+Patch.prototype.iterate = async function (item, path, process) {
 
     // split path to array of strings
     let names = path.split('/');
@@ -137,14 +180,14 @@ Patch.prototype.iterate = function (item, path, process) {
         current = this.step(current, name);
     }
 
-    process(current, context, attribute);
+    await process(current, context, attribute);
 }
 
 Patch.prototype.step = function (element, path) {
-    if(element instanceof Array) {
+    if (element instanceof Array) {
         let ret = undefined;
         element.forEach((item) => {
-            if(item._id == path) {
+            if (item._id == path) {
                 ret = item;
             }
         })
