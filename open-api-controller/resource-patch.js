@@ -5,7 +5,8 @@ var schema = require('./schema-provider');
 
 const PATCH_OPERATIONS = {
     ADD: "add",
-    SET: "replace"
+    SET: "replace",
+    REMOVE: "remove"
 }
 
 
@@ -94,6 +95,12 @@ Patch.prototype.jsonpatch = async function (req, res, orm) {
                 await this.set(item, operation.path, operation.value);
                 break;
             }
+            case PATCH_OPERATIONS.REMOVE: {
+                // perform ADD operation
+                console.debug(`JSON patch REMOVE ${operation.path}`)
+                await this.remove(item, operation.path, operation.value);
+                break;
+            }
             default:
                 console.error(`patch operation ${operation.op} is not implemented`);
         }
@@ -111,6 +118,7 @@ Patch.prototype.set = async function (item, path, value) {
         //console.log(`name: ${this.name}, element: ${element}, attribute: ${attribute}`)
 
         element[attribute] = value;
+        console.log(`setting ${attribute} to ${value}`);
 
         if (this.handler && this.handler.patch) {
             console.log('using handler');
@@ -121,15 +129,45 @@ Patch.prototype.set = async function (item, path, value) {
         }
 
     });
-    /*
-    if(attribute instanceof Array) {
-        throw 'SET operation for arrays not supported';
-    } else {
-        attribute = value;
-    }
-    */
-
 }
+
+Patch.prototype.remove = async function (item, path, value) {
+
+    await this.iterate(item, path, async (current, element, attribute) => {
+        // watch here for special rules
+        //console.log(`name: ${this.name}, element: ${element}, attribute: ${attribute}`)
+
+        // let's assume element is an array
+        // надо найти элемент с соответствующим ID и убить его
+        //console.log(`removine ${attribute} from ${element}`);
+        if(element instanceof Array) {
+            let item = element.find( data => {
+                return data._id == attribute;
+            })
+
+            if(item) {
+                console.log('REMOVE success');
+                element.splice( element.indexOf(item), 1 );
+            } else {
+                console.log(`element ${attribute} not found in the array`);
+            }
+
+        } else {
+            console.log(`cannot remove non-array elements`);
+        }
+
+
+        if (this.handler && this.handler.patch) {
+            console.log('using handler');
+            await this.handler.patch(item, path, value);
+            console.log('handler applied');
+        } else {
+            await Promise.resolve(true);
+        }
+
+    });
+}
+
 
 Patch.prototype.add = async function (item, path, value) {
     this.iterate(item, path, (current, element, attribute) => {
