@@ -4,7 +4,7 @@ function ProductOfferingHandler() {
 
     this.rules = [
         {
-            expression: new RegExp(''),
+            expression: new RegExp('/productSpecification'),
             handler: this.setSpecificationHandler
         }
     ]
@@ -12,9 +12,11 @@ function ProductOfferingHandler() {
 
 ProductOfferingHandler.prototype.patch = async function (item, path, value) {
 
-    for(rule of this.rules) {
+    for (rule of this.rules) {
+        console.log(`testing regexp ${rule} against ${path}`);
         if (rule.expression.test(path)) {
-            await rule.handler(item, value);
+            console.log(`MATCHED`);
+            await rule.handler.call(this, item, value);
         }
     }
 
@@ -22,6 +24,9 @@ ProductOfferingHandler.prototype.patch = async function (item, path, value) {
 
 /**
  * Инициализация значений характеристик из спецификации
+ * @argument item the pobject being patched
+ * @argument value Specification reference object
+ * @argument items characteristic array to append
  */
 ProductOfferingHandler.prototype.setSpecificationHandler = async function (item, value) {
     //await new Promise(r => setTimeout(r, 5000));
@@ -35,25 +40,13 @@ ProductOfferingHandler.prototype.setSpecificationHandler = async function (item,
      - конец
      */
 
-    // загрузка спецификации
-    console.log(`fetching specification`);
+
+
     try {
-        let response = await fetch(value.href);
-        let specification = await response.json();
 
         // заполним значения продуктового предложения характеристиками спецификации
-        console.dir(specification);
-        let items = [];
-
-        specification.productSpecCharacteristic.forEach((characteristic) => {
-            //const char = (({ name, description, valueType, minCardinality, maxCardinality }) => ({ name, description, valueType, minCardinality, maxCardinality }))(object);
-            const char = { name, description, valueType, minCardinality, maxCardinality } = characteristic;
-            console.log(`${char.name}`);
-            char.productSpecification = value;
-            items.push(char);
-        });
-
-        item['prodSpecCharValueUse'] = items;
+        //console.dir(specification);
+        item['prodSpecCharValueUse'] = await this.aggregateCharacteristics(value);
         return Promise.resolve(1);
 
     } catch (e) {
@@ -61,6 +54,41 @@ ProductOfferingHandler.prototype.setSpecificationHandler = async function (item,
 
     }
 
+
 }
 
+ProductOfferingHandler.prototype.aggregateCharacteristics = async function (ref) {
+
+    // init characteristic array
+    let items = [];
+
+    // загрузка спецификации
+    console.log(`fetching specification ${ref.name} at ${ref.href}`);
+    try {
+        let response = await fetch(ref.href);
+        let specification = await response.json(); // got specification
+
+        // load nested specs
+        for (subspec of specification.bundledProductSpecification) {
+            subitems = await this.aggregateCharacteristics(subspec)
+            items = items.concat(subitems);
+        }
+
+        // extract all characteristics from the spec
+        specification.productSpecCharacteristic.forEach((characteristic) => {
+            const data = { name, description, valueType, minCardinality, maxCardinality } = characteristic;
+            console.log(`${data.name}`);
+            data.productSpecification = ref;
+            items.push(data);
+        });
+    }
+    catch (e) {
+        console.dir(e);
+    }
+
+    return items;
+}
+
+
 module.exports = new ProductOfferingHandler();
+console.dir(module.exports);
